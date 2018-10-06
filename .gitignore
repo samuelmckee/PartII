@@ -1,0 +1,6 @@
+$cat .gitignore
+*~
+*.swp
+*.py[cod]
+__pycache__/
+
