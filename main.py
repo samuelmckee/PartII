@@ -55,6 +55,12 @@ def get_data(filename, dir):
 
 
 #Functions for processing data
+def plot(data):
+    R,T,E = zip(*data)  #Unzip data so it can be used by trisurf
 
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot_trisurf(R,T,E)
+    plt.show()
 
 main()
