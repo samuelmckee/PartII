@@ -1,7 +1,5 @@
 from sys import argv
 from os import listdir
-from numpy import *
-from scipy.optimize import 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
@@ -10,7 +8,8 @@ def main():
     try:
         dir = argv[1]
     except IndexError:
-        print("Please enter directory as command line containing output files as argument.")
+        print("Please enter directory as command line "
+                    "containing output files as argument.")
         return #Exit program
 
     file_list = [str for str in listdir(dir) if str.endswith(".out")]
@@ -19,9 +18,9 @@ def main():
         print("No .out files found in given directory")
         return #Exit program
 
-    data = [get_data(filename, dir) for filename in file_list if get_data(filename, dir) != None]
+    data = [get_data(filename, dir) for filename
+                in file_list if get_data(filename, dir) != None]
 
-    fit_data(data)
     plot(data)
 
 
