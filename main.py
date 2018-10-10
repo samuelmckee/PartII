@@ -1,10 +1,5 @@
 from sys import argv
 from os import listdir
-from numpy import *
-from scipy.optimize import 
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-
 
 def main():
     try:
@@ -22,7 +17,6 @@ def main():
     data = [get_data(filename, dir) for filename in file_list if get_data(filename, dir) != None]
 
     fit_data(data)
-    plot(data)
 
 
 # Functions for importing data from files
@@ -57,9 +51,11 @@ def get_data(filename, dir):
 #Functions for processing data
 def fit_data(data):
     r_eq, t_eq, e_eq = min(data, key = lambda tup: tup[2])
-    
+
     r_fit = [(r, t, e) for (r, t, e) in data if r == r_eq]
+    r_fit.sort(key = lambda tup: tup[0])
 
     t_fit = [(r, t, e) for (r, t, e) in data if t == t_eq]
+    t_fit.sort(key = lambda tup: tup[1])
 
 main()
