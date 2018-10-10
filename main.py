@@ -55,6 +55,11 @@ def get_data(filename, dir):
 
 
 #Functions for processing data
+def fit_data(data):
+    r_eq, t_eq, e_eq = min(data, key = lambda tup: tup[2])
+    
+    r_fit = [(r, t, e) for (r, t, e) in data if r == r_eq]
 
+    t_fit = [(r, t, e) for (r, t, e) in data if t == t_eq]
 
 main()
