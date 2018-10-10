@@ -1,5 +1,6 @@
 from sys import argv
 from os import listdir
+from numpy import *
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +22,36 @@ def get_energy(file_path):
             l = line.split()
             return float(l[4])
 
+def get_data(filename, dir):
+    try:
+        r = get_r(filename)
+        t = get_theta(filename)
+        e = get_energy(dir + "/" + filename)
+        return (r,t,e)
+    except:
+        print("Failed to get data point for " + filename)
+
+def fit_data(data):
+    r_eq, t_eq, e_eq = min(data, key = lambda tup: tup[2])
+    print(r_eq)
+    print(t_eq)
+    print(e_eq)
+
+def plot(data):
+    #Format data so it can be used by matplotlib
+    es = { (r,t): e for (r,t,e) in data }
+
+    rs, ts, _ = zip(*data)    
+    rs = sorted(rs)
+    ts = sorted(ts)
+
+    R,T = meshgrid(rs,ts)
+    E = np.array([ np.array([es[(r,t)] for r in rs]) for t in ts])
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.contour(R,T,E)
+    plt.show()
 
 def main():
     try:
@@ -35,22 +66,9 @@ def main():
         print("No .out files found in given directory")
         return #Exit program
 
-    rs = [get_r(filename) for filename in file_list]
-    ts = [get_theta(filename) for filename in file_list]
-    es = [get_energy(dir + "/" + filename) for filename in file_list]
+    data = [get_data(filename, dir) for filename in file_list if get_data(filename, dir) != None]
 
-    es = { (rs[i],ts[i]): es[i] for i in range(len(rs)) }
-
-    rs = sorted(set(rs))
-    ts = sorted(set(ts))
-
-    R,T = np.meshgrid(rs,ts)
-    E = np.array([ np.array([es[(r,t)] for r in rs]) for t in ts])
-
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(R,T,E)
-    plt.show()
-
+    fit_data(data)
+    plot(data)
 
 main()
