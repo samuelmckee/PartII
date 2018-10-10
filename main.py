@@ -21,6 +21,7 @@ def get_energy(file_path):
             l = line.split()
             return float(l[4])
 
+
 def main():
     try:
         dir = argv[1]
