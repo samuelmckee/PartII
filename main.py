@@ -10,47 +10,46 @@ def main():
     try:
         dir = argv[1]
     except IndexError:
-        print("Please enter directory containing output files as command "
-                            "line argument.")
+        print('Please enter directory containing output files as command '
+                            'line argument.')
         return #Exit program
 
-    file_list = [str for str in listdir(dir) if str.endswith(".out")]
+    file_list = [str for str in listdir(dir) if str.endswith('.out')]
 
     if len(file_list) == 0:
-        print("No .out files found in given directory")
+        print('No .out files found in given directory')
         return #Exit program
 
     data = [get_data(filename, dir) for filename
                 in file_list if get_data(filename, dir) != None]
 
-    print("Loaded " + str(len(data)) + " files")
+    print('Loaded ' + str(len(data)) + ' files')
 
     dt = datetime.now()
-    out = "%d-%d-%d_%d:%d:%d" % (dt.year,
+    out = '%d-%d-%d_%d:%d:%d' % (dt.year,
                                  dt.month,
                                  dt.day,
                                  dt.hour,
                                  dt.minute,
                                  dt.second)
-
-    plot(data, out + "_figure.png")
+    plot(data, 'FIGURE_' + out + '.png')
 
 
 # Functions for importing data from files
 def get_theta(filename):
-    theta = filename.split("theta")[1][:-4]
+    theta = filename.split('theta')[1][:-4]
     return float(theta)
 
 
 def get_r(filename):
-    r = filename.split("theta")[0].split("r")[-1]
+    r = filename.split('theta')[0].split('r')[-1]
     return float(r)
 
 
 def get_energy(file_path):
-    f = open(file_path, "r")
+    f = open(file_path, 'r')
     for line in f:
-        if "SCF Done" in line:
+        if 'SCF Done' in line:
             l = line.split()
             return float(l[4])
 
@@ -59,23 +58,24 @@ def get_data(filename, dir):
     try:
         r = get_r(filename)
         t = get_theta(filename)
-        e = get_energy(dir + "/" + filename)
+        e = get_energy(dir + '/' + filename)
         return (r,t,e)
     except:
-        print("Failed to get data point for " + filename)
+        print('Failed to get data point for ' + filename)
 
 
 #Functions for processing data
-def plot(data, out):
+def plot(data,out):
     R,T,E = zip(*data)  #Unzip data so it can be used by trisurf
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.view_init(10, 135)
+    ax.view_init(10, 200)
     ax.plot_trisurf(R,T,E, cmap='autumn')
-    plt.savefig(out)
-    print("Saved surface plot as " + out)
-    #Add labels
-    #Increase size of figure
+    ax.set_xlabel('r / Angstroms')
+    ax.set_ylabel('theta / degrees')
+    ax.set_zlabel('Energy / Hartrees')
+    plt.savefig(out, dpi = 300)
+    print('Saved surface plot as ' + out)
 
 main()
