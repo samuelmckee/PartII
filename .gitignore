@@ -3,4 +3,5 @@ $cat .gitignore
 *.swp
 *.py[cod]
 __pycache__/
-
+*.png
+*.txt

@@ -1,5 +1,7 @@
 from sys import argv
 from os import listdir
+from datetime import datetime
+
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
@@ -8,8 +10,8 @@ def main():
     try:
         dir = argv[1]
     except IndexError:
-        print("Please enter directory as command line "
-                    "containing output files as argument.")
+        print("Please enter directory containing output files as command "
+                            "line argument.")
         return #Exit program
 
     file_list = [str for str in listdir(dir) if str.endswith(".out")]
@@ -21,7 +23,17 @@ def main():
     data = [get_data(filename, dir) for filename
                 in file_list if get_data(filename, dir) != None]
 
-    plot(data)
+    print("Loaded " + str(len(data)) + " files")
+
+    dt = datetime.now()
+    out = "%d-%d-%d_%d:%d:%d" % (dt.year,
+                                 dt.month,
+                                 dt.day,
+                                 dt.hour,
+                                 dt.minute,
+                                 dt.second)
+
+    plot(data, out + "_figure.png")
 
 
 # Functions for importing data from files
@@ -54,12 +66,16 @@ def get_data(filename, dir):
 
 
 #Functions for processing data
-def plot(data):
+def plot(data, out):
     R,T,E = zip(*data)  #Unzip data so it can be used by trisurf
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.plot_trisurf(R,T,E)
-    plt.show()
+    ax.view_init(10, 135)
+    ax.plot_trisurf(R,T,E, cmap='autumn')
+    plt.savefig(out)
+    print("Saved surface plot as " + out)
+    #Add labels
+    #Increase size of figure
 
 main()
