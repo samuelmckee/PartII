@@ -49,13 +49,9 @@ def main():
     f.write("Vibrational frequencties:\n\n")
     f.write("Frequency of symmetric stretch = %f cm^-1\n"
         % params.get('nu_1'))
-    f.write("Symmetric stretch data fitted using %d data points with R^2 = %f\n"
-        % (params.get('r_fit')[2], params.get('r_fit')[1]))
     f.write("\n")
     f.write("Frequency of bending mode = %f cm^-1\n"
         % params.get('nu_2'))
-    f.write(("Bending mode data fitted using %d data points with R^2 = %f\n")
-        % (params.get('t_fit')[2], params.get('t_fit')[1]))
     f.close()
     print("Wrote calculated parameters data to OUTPUT_%s.txt" % out)
 
@@ -91,7 +87,6 @@ def get_data(filename, dir):
         print("Failed to get data point for " + filename)
 
 
-# Plots data on surface plots and outputs png file of figure
 def plot(data,out):
     # Prepare points to be plotted
     # Values are interpolated to give smoother colour gradient on plot
@@ -114,9 +109,6 @@ def plot(data,out):
     plt.savefig(out, dpi = 200)
     print("Saved surface plot as " + out)
 
-
-# Functions for fitting data
-
 def fit_data(data, tol_r, tol_t):
     # Get equilibrium geometry
     r_eq, t_eq, e_eq = min(data, key = lambda tup: tup[2])
@@ -126,16 +118,14 @@ def fit_data(data, tol_r, tol_t):
     r_mode.sort(key = lambda tup: tup[0])
     rs = [x[0] * 1.0e-10 for x in r_mode]      # Get r in m
     es = [x[2] * 4.35974e-18 for x in r_mode]  # Get E in J
-    r_fit = fit_to_tol(rs, es, r_eq * 1.0e-10, tol_r)
-    k_r = 2. * r_fit[0]
+    k_r = polyfit(rs, es, 2)[0]
 
     # Fit data along bending mode
     t_mode = [(r, t, e) for (r, t, e) in data if r == r_eq]  # Keep r = r_eq
     t_mode.sort(key = lambda tup: tup[1])
     ts = [x[1] * pi / 180. for x in t_mode]    # Get theta in radians
     es = [x[2] * 4.35974e-18 for x in t_mode]  # Get E in J
-    t_fit = fit_to_tol(ts, es, t_eq * pi / 180., tol_t)
-    k_t = 2. * t_fit[0]
+    k_t = polyfit(ts, es, 2)[0]
 
     # Calculate vibrational frequencties in wavenumbers
     mu_1 = 2.0 * 1.66e-27
@@ -147,45 +137,10 @@ def fit_data(data, tol_r, tol_t):
     return {'r_eq' : r_eq,
             't_eq' : t_eq,
             'e_eq' : e_eq,
-            'r_fit': r_fit,
-            't_fit': t_fit,
-            'k_r'  : k_r,
-            'k_t'  : k_t,
             'nu_1' : nu_1,
             'nu_2' : nu_2
             }
 
-
-# Fits quadratic to xs and ys, reducing maximum displacement from equilibrium
-# Until R^2 rises above minimum value
-def fit_to_tol(xs, ys, x_eq, tol):
-    p = polyfit(xs, ys, 2) # Fit data to quadratic
-    range = max([abs(x-x_eq) for x in xs])
-    step = range / (2. * len(xs)) # Amount max displacement reduced
-                                  # by after each fit
-    R2 = get_r2(p, xs, ys)
-
-    while R2 < tol:     # R^2 below threshold
-        #Reduce maximum displacement from equilibrium
-        range -= step
-        ys = [y for (i, y) in enumerate(ys) if abs(xs[i] - x_eq) < range]
-        xs = [x for x in xs if abs(x - x_eq) < range]
-
-        #Recalculate fit
-        p = polyfit(xs, ys, 2)
-        R2 = get_r2(p,xs,ys)
-
-    return (p[0], R2, len(xs))
-
-
-# Returns r^2 value for polynomial p which is fitted to xs and ys
-def get_r2(p, xs, ys):
-    y_fit = [polyval(p, x) for x in xs] # y values predicted by parameters
-    y_avg = sum(ys)/len(ys)             # Average y value
-    SStot = sum((ys - y_avg)**2)        # Sum of squares
-    y_res = subtract(ys, y_fit)         # Residuals
-    SSres = sum(y_res**2)               # Residual sum of squares
-
-    return 1. - SSres / SStot
+#__name__ == __main__
 
 main()
