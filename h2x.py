@@ -174,7 +174,7 @@ def plot_surface(data, out):
     ax.grid(False)
     ax.plot_surface(grid_r,grid_t,grid_e, rstride=1, cstride=1,
         cmap='inferno')
-    plt.savefig(out, dpi = 300)
+    plt.savefig(out, dpi = 300, bbox_inches='tight')
     print('Saved surface plot as ' + out)
     plt.close()
 
@@ -189,7 +189,7 @@ def fit_mode(data, tol, eq, out, xlabel, ylabel):
     Args:
         data (list of (float, float)): input data for quadratic fit
         tol (float): maximum dispacement from equilibrium used for fitting
-        eq  (float): equilibrium position in x data
+        eq  (float): x coordinate of equilibrium position
         out (str): prefix to put on output file names
         xlabel (str): label to use for x axis on plot
         ylabel (str): label to use for y axis on plot
@@ -199,27 +199,27 @@ def fit_mode(data, tol, eq, out, xlabel, ylabel):
     """
     # Get data points within tolerance
     data.sort(key = lambda tup: tup[0])
-    ys = [y for (x,y) in data if abs(x - eq) < tol]
-    xs = [x for (x,y) in data if abs(x - eq) < tol]
+    ys = [y for (x,y) in data if abs(x - eq) < tol]  # y data to fit
+    xs = [x for (x,y) in data if abs(x - eq) < tol]  # x data to fit
 
     # Fit data to polynomial
     p = np.polyfit(xs, ys, 2)
 
     # Produce array of points for plotting fitted polynomial
-    xs_fit = np.linspace(min(xs), max(xs), 100)
-    ys_fit = [np.polyval(p, x) for x in xs_fit]
+    fitted_xs = np.linspace(xs[0], xs[-1], 100)
+    fitted_ys = [np.polyval(p, x) for x in fitted_xs]
 
     # Plot raw data / fitted polynomial then save figure
-    plt.scatter(xs, ys, marker='+', linewidth=0.5,color='k')
-    plt.plot(xs_fit, ys_fit, linewidth=0.8, color='r')
+    plt.scatter(xs, ys, marker='+', linewidth=0.5, color='k')
+    plt.plot(fitted_xs, fitted_ys, linewidth=0.8, color='r')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.savefig(out, dpi = 300)
+    plt.savefig(out, dpi = 300, bbox_inches='tight')
     print('Saved plot of fitted mode to ' + out)
     plt.close()
 
-    # Return coefficient on x^2
-    return p[0]
+    # Return coefficients of polynomial
+    return p
 
 
 def main():
@@ -252,30 +252,31 @@ def main():
     r_eq, t_eq, e_eq = min(data, key = lambda tup: tup[2])
 
     # Values used in calculations
-    wavenumber = 3.335641e-11  # Convert Hz to cm-1
+    wavenumber = 3.3356e-11    # Convert Hz to cm-1
     angstrom = 1.0e-10         # Convert angstrom to metres
     degree = pi / 180.         # Convert degrees to radians
     hartree = 4.35974e-18      # Convert hartree to J
-    mu_1 = 2.0 * 1.66e-27      # Reduced mass for streching
-    mu_2 = 0.5 * 1.66e-27      # Reduced mass for bending
+    atomic_mass = 1.66054e-27  # Conver atomic mass units to kg
+    mu_1 = 2.0 * atomic_mass   # Reduced mass for streching
+    mu_2 = 0.5 * atomic_mass   # Reduced mass for bending
 
     # Fit data along symmetric stretch
     r_mode = [(r, e) for (r, t, e) in data if t == t_eq]  # Keep t = t_eq)
     k_r = 2. * fit_mode(r_mode, rtol, r_eq, '%s_STRETCH.png' % out,
-        'r / Angstroms', 'Energy / Hartrees')
+        'r / Angstroms', 'Energy / Hartrees')[0]
     # k in hartrees angstroms^-2. Convert to J m^-2
-    k_r *= hartree / ((angstrom)**2)
+    k_r *= hartree / (angstrom**2)
 
     # Fit data along bending mode
     t_mode = [(t, e) for (r, t, e) in data if r == r_eq]  # Keep r = r_eq
     k_t = 2. * fit_mode(t_mode, ttol, t_eq, '%s_BEND.png' % out,
-        'theta / Degrees', 'Energy / Hartrees')
+        'theta / Degrees', 'Energy / Hartrees')[0]
     # k in hartrees degree^-2. Convert to J radian^-2
     k_t *= hartree / (degree**2)
 
     # Calculate vibrational frequencties in cm-1
-    nu_1 = sqrt(k_r / mu_1) / (2. * pi)  * wavenumber
-    nu_2 = sqrt(k_t / ((r_eq * angstrom)**2 * mu_2)) / (2. * pi) * wavenumber
+    nu_1 = (wavenumber * sqrt(k_r / mu_1)) / (2. * pi)
+    nu_2 = (wavenumber * sqrt(k_t / ((r_eq * angstrom)**2 * mu_2))) / (2. * pi)
 
     write_output(r_eq, t_eq, e_eq, nu_1, nu_2, rtol, ttol, dir,
         '%s_OUTPUT.txt' % out)
