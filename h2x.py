@@ -113,38 +113,6 @@ def get_energy(file_path):
             return float(l[4])
 
 
-def write_output(r_eq, t_eq, e_eq, nu_1, nu_2, rtol, ttol, dir, out):
-    """
-    Writes equilibrium geometry and vibrational frequencies to .txt file
-
-    Args:
-        r_eq (float): equilibrium bond length (in Angstroms)
-        t_eq (float): equilibrium bond angle (in Degrees)
-        e_eq (float): equilibrium energy (in Hartrees)
-        nu_1 (float): frequency of symmetric stretch (in cm^-1)
-        nu_2 (float): frequency of bend (in cm^-1)
-        rtol (float): maximum r dispacement from equilibrium used for fitting
-        ttol (float): maximum theta dispacement from equilibrium used for fitting
-        dir (str): directory from which Gaussian output files were reads
-        out (str): prefix to put on output file names
-    """
-
-    f = open(out, 'w')
-
-    f.write('Data read from %s \n\n\n' % dir)
-    f.write('Equilibrium geometry: \n\n')
-    f.write('Bond length = %.2f Angstroms\n' % r_eq)
-    f.write('Bond angle = %.0f degrees\n' % t_eq)
-    f.write('Energy = %f Hartrees\n\n\n' % e_eq)
-    f.write('Vibrational frequencties:\n\n')
-    f.write('Frequency of symmetric stretch = %f cm^-1\n' % nu_1)
-    f.write('An r tolerance of %.2f Angstroms was used.\n\n' % rtol)
-    f.write('Frequency of bending mode = %f cm^-1\n' % nu_2)
-    f.write('A theta tolerance of %.1f degrees was used.' % ttol)
-    f.close()
-    print('Wrote calculated parameters data to ' + out)
-
-
 def plot_surface(data, out):
     """
     Plots 3D surface plot from list of tuples and saves figure as png file
@@ -179,7 +147,7 @@ def plot_surface(data, out):
     plt.close()
 
 
-def fit_mode(data, tol, eq, out, xlabel, ylabel):
+def fit_quad(data, tol, eq, out, xlabel, ylabel):
     """
     Takes list of (x,y) points and fits to a quadratic. Plots fitted quadratic.
 
@@ -262,14 +230,14 @@ def main():
 
     # Fit data along symmetric stretch
     r_mode = [(r, e) for (r, t, e) in data if t == t_eq]  # Keep t = t_eq)
-    k_r = 2. * fit_mode(r_mode, rtol, r_eq, '%s_STRETCH.png' % out,
+    k_r = 2. * fit_quad(r_mode, rtol, r_eq, '%s_STRETCH.png' % out,
         'r / Angstroms', 'Energy / Hartrees')[0]
     # k in hartrees angstroms^-2. Convert to J m^-2
     k_r *= hartree / (angstrom**2)
 
     # Fit data along bending mode
     t_mode = [(t, e) for (r, t, e) in data if r == r_eq]  # Keep r = r_eq
-    k_t = 2. * fit_mode(t_mode, ttol, t_eq, '%s_BEND.png' % out,
+    k_t = 2. * fit_quad(t_mode, ttol, t_eq, '%s_BEND.png' % out,
         'theta / Degrees', 'Energy / Hartrees')[0]
     # k in hartrees degree^-2. Convert to J radian^-2
     k_t *= hartree / (degree**2)
@@ -278,8 +246,23 @@ def main():
     nu_1 = (wavenumber * sqrt(k_r / mu_1)) / (2. * pi)
     nu_2 = (wavenumber * sqrt(k_t / ((r_eq * angstrom)**2 * mu_2))) / (2. * pi)
 
-    write_output(r_eq, t_eq, e_eq, nu_1, nu_2, rtol, ttol, dir,
-        '%s_OUTPUT.txt' % out)
+    # Write calculated frequencies to files
+    f = open('%s_OUTPUT.txt' % out, 'w')
+
+    f.write('Data read from %s \n\n\n' % dir)
+    f.write('Equilibrium geometry: \n\n')
+    f.write('Bond length = %.2f Angstroms\n' % r_eq)
+    f.write('Bond angle = %.0f degrees\n' % t_eq)
+    f.write('Energy = %f Hartrees\n\n\n' % e_eq)
+    f.write('Vibrational frequencties:\n\n')
+    f.write('Frequency of symmetric stretch = %f cm^-1\n' % nu_1)
+    f.write('An r tolerance of %.2f Angstroms was used.\n\n' % rtol)
+    f.write('Frequency of bending mode = %f cm^-1\n' % nu_2)
+    f.write('A theta tolerance of %.1f degrees was used.' % ttol)
+    f.close()
+    print('Wrote calculated frequencies to %s_OUTPUT.txt' % out)
+
+    # Plot energy surface
     plot_surface(data, '%s_SURFACE.png' % out)
 
 
