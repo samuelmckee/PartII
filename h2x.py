@@ -163,7 +163,7 @@ def fit_quad(data, tol, eq, out, xlabel, ylabel):
         ylabel (str): label to use for y axis on plot
 
     Returns:
-        float: coefficient on x^2
+        list of float: coefficients for quadratic in decreasing order of x^n
     """
     # Get data points within tolerance
     data.sort(key = lambda tup: tup[0])
@@ -229,14 +229,16 @@ def main():
     mu_2 = 0.5 * atomic_mass   # Reduced mass for bending
 
     # Fit data along symmetric stretch
-    r_mode = [(r, e) for (r, t, e) in data if t == t_eq]  # Keep t = t_eq)
+    r_mode = [(r, e) for (r, t, e) in data
+        if isclose(t, t_eq, rel_tol=1.0e-9)]  # Keep t = t_eq)
     k_r = 2. * fit_quad(r_mode, rtol, r_eq, '%s_STRETCH.png' % out,
         'r / Angstroms', 'Energy / Hartrees')[0]
     # k in hartrees angstroms^-2. Convert to J m^-2
     k_r *= hartree / (angstrom**2)
 
     # Fit data along bending mode
-    t_mode = [(t, e) for (r, t, e) in data if r == r_eq]  # Keep r = r_eq
+    t_mode = [(t, e) for (r, t, e) in data
+        if isclose(r, r_eq, rel_tol=1.0e-9)]  # Keep r = r_eq
     k_t = 2. * fit_quad(t_mode, ttol, t_eq, '%s_BEND.png' % out,
         'theta / Degrees', 'Energy / Hartrees')[0]
     # k in hartrees degree^-2. Convert to J radian^-2
